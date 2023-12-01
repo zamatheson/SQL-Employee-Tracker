@@ -1,9 +1,8 @@
-const inquirer = require("inquirer");
-const mysql = require("mysql2");
-const db = require('./db/connection');
+import inquirer from "inquirer";
+import { createConnection } from "mysql2";
 
 // creates a connection with MySQL
-const connection = mysql.createConnection({
+const connection = createConnection({
     host: "localhost",
     port: 3306,
     user: "root",
@@ -20,7 +19,7 @@ connection.connect((err) =>{
 
 // function for main menu
 function start() {
-    inquirer.prompt({
+    prompt({
             type: "list",
             name: "action",
             message: "Choose Your Path...",
@@ -109,7 +108,7 @@ function viewAllEmployees() {
     LEFT JOIN role r
         ON e.role_id = r.id
     LEFT JOIN department d
-    ON d.id = r.departmet_id
+        ON d.id = r.department_id
     LEFT JOIN employee m
         ON m.id = e.manager_id`;
 

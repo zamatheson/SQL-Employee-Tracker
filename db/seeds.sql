@@ -1,6 +1,5 @@
 USE employeeDB
 
-
 INSERT INTO departments (department_name)
 VALUES ("Sales"), ("Engineering"), ("Hospitality"), ("Leadership"), ("Finance"), ("Marketing");
 
