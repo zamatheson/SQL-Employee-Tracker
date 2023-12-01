@@ -1,5 +1,6 @@
 const inquirer = require("inquirer");
 const mysql = require("mysql2");
+const db = require('./db/connection');
 
 // creates a connection with MySQL
 const connection = mysql.createConnection({
@@ -19,8 +20,7 @@ connection.connect((err) =>{
 
 // function for main menu
 function start() {
-    inquirer
-        .createPromptModule({
+    inquirer.prompt({
             type: "list",
             name: "action",
             message: "Choose Your Path...",
@@ -90,7 +90,7 @@ function viewAllDepartments() {
 function viewAllRoles() {
     console.log("Viewing All Roles...");
 
-    const query = "SELECT roles.title, roles.id, departments.department_name, roles.salary roles.department_id = departments.id";
+    const query = "SELECT roles.title, roles.id, departments.department_name, roles.salary, roles.department_id FROM roles JOIN departments ON roles.department_id = departments.id";
     connection.query(query, (err, res) => {
         if (err) throw err;
         console.table(res);
@@ -104,7 +104,7 @@ function viewAllEmployees() {
     console.log("Viewing All Employees...");
 
     const query = `
-    SELECT e.id, e.first_name, e.last_name, r.title, d.name AS department, r.salary, CONCAT'(m.first_name, ' ', m.last_name) AS mamager
+    SELECT e.id, e.first_name, e.last_name, r.title, d.name AS department, r.salary, CONCAT(m.first_name, ' ', m.last_name) AS manager
     FROM employee e
     LEFT JOIN role r
         ON e.role_id = r.id
@@ -124,17 +124,19 @@ function viewAllEmployees() {
 // function for adding a department
 function viewAddDepartment() {
     console.log("Viewing Add Department...")
-    inquirer
-        .createPromptModule({
+
+    inquirer.prompt([
+            {
             type: "input",
             name: "name",
             message: "Please enter the name of the department:",
-        })
+            }
+        ])
         .then((answer) => {
             console.log(answer.name);
             const query = `INSERT INTO departments (department_name) VALUES ("${answer.name}")`;
 
-            connection.query/(query, (err, res) => {
+            connection.query(query, (err, res) => {
                 if (err) throw err;
                 console.log(`You have successfully added ${answer.name} in the department database!`);
 
@@ -151,8 +153,7 @@ function viewAddRole() {
     const query = "SELECT * FROM departments";
     connection.query(query, (err, res) => {
         if (err) throw err;
-        inquirer
-            .prompt([
+        inquirer.prompt([
                 {
                     type: "input",
                     name: "title",
@@ -171,18 +172,18 @@ function viewAddRole() {
                 },
             ])
             .then((answers) => {
-                const department = res.find((department) => department.name === answers.department);
+                const department = res.find((department) => department.department_name === answers.department);
                 const query = "INSERT INTO roles SET ?";
                 connection.query(
                     query,
                     {
-                        tite: answers.title,
+                        title: answers.title,
                         salary: answers.salary,
-                        department_id: department,
+                        department_id: department.id,
                     },
                     (err, res) => {
                         if  (err) throw err;
-                        console.log(`Added the role ${answers.title} with the salary of ${ansewrs.salary} to the ${answers.department} department database.`)
+                        console.log(`Added the role ${answers.title} with the salary of ${answers.salary} to the ${answers.department} department database.`)
 
                         start();
                     }
@@ -200,7 +201,7 @@ function viewAddAnEmployee() {
             console.error(err);
             return;
         }
-        const roles = results.map(({id, title}) => ({
+        const roles = res.map(({ id, title }) => ({
             name: title,
             value: id,
         }));
@@ -211,12 +212,11 @@ function viewAddAnEmployee() {
                 console.error(err);
                 return;
             }
-            const managers = results.map(({ id, name }) => ({
+            const managers = res.map(({ id, name }) => ({
                 name,
                 value: id,
             }));
-            inquirer
-                .prompt([
+            inquirer.prompt([
                     {
                         type: "input",
                         name: "firstName",
@@ -266,8 +266,7 @@ function viewAddAnEmployee() {
 
 // function for updating an employee role
 function viewUpdateEmployeeRole() {
-    inquirer    
-        .prompt([
+    inquirer.prompt([
             {
                 type: "input",
                 message: "Which employee would you like to update?",
